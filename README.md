@@ -1,12 +1,12 @@
 # Dynatrace AI Agent: n8n Workflow for Grail & Automation
 
-This repository contains a professional **n8n workflow** designed for Dynatrace Solution Engineers and SREs. It leverages an AI Agent to interact with **Dynatrace Grail**, perform advanced DQL queries for performance data and BizEvents, and trigger relevant **Dynatrace Automations** via the Model Context Protocol (MCP).
+This repository contains a simple **n8n workflow** designed for Dynatrace Solution Engineers and SREs. It leverages an AI Agent with simple a System Prompt to interact with **Dynatrace Grail**, perform a simple DQL queries for performance data and BizEvents, and trigger relevant **Dynatrace Automations** via the Model Context Protocol (MCP).
 
 ---
 
 ## 🚀 Overview
 
-Modern observability requires moving from "seeing" to "acting." This integration allows users to interact with their Dynatrace environment using natural language through a chat interface. The AI Agent intelligently decides whether to query data from Grail or execute an automation workflow based on the real-time state of the system.
+The concept shared here is a simple observability, moving from "seeing" to "acting." This integration allows users to interact with their Dynatrace environment using natural language through a chat interface. The AI Agent intelligently decides whether to query data from Grail or execute an automation workflow based on the real-time state of the system.
 
 ### Key Use Cases:
 * **Performance Analysis:** Query metrics and logs directly using DQL via the AI Agent.
