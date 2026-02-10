@@ -20,7 +20,7 @@ Modern observability requires moving from "seeing" to "acting." This integration
 
 The workflow is built on a modular "Agent-Tool" architecture within n8n:
 
-![n8n Workflow Setup](image_f2563b.png)
+![n8n Workflow Setup](dynatrace_n8n.png)
 *Figure 1: High-level view of the AI Agent node, memory, and Dynatrace tool connectors.*
 
 ### Core Components:
