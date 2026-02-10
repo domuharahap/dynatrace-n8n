@@ -20,7 +20,7 @@ Modern observability requires moving from "seeing" to "acting." This integration
 
 The workflow is built on a modular "Agent-Tool" architecture within n8n:
 
-![n8n Workflow Setup](dynatrace_n8n.png)
+![n8n Workflow Setup](/img/dynatrace_n8n.png)
 *Figure 1: High-level view of the AI Agent node, memory, and Dynatrace tool connectors.*
 
 ### Core Components:
@@ -82,11 +82,11 @@ If a match is found, the agent can trigger the `run_automation` tool to resolve 
 ## 📸 Screenshots
 
 ### AI Agent Logic
-![Agent Detail](img/automation_tools.png)
+![Agent Detail](/img/automation_tools.png)
 *Detailed view of how the Agent selects between Grail and Automation tools.*
 
 ### Sample Interaction
-![Chat Sample](img/mcp_dql_executions.png)
+![Chat Sample](/img/mcp_dql_executions.png)
 *Example of a user querying BizEvents and the agent suggesting an automation.*
 
 ---
