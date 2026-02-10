@@ -86,7 +86,7 @@ If a match is found, the agent can trigger the `run_automation` tool to resolve 
 *Detailed view of how the Agent selects between Grail and Automation tools.*
 
 ### Sample Interaction
-![Chat Sample](/img/mcp__dynatrace_dql.png)
+![Chat Sample](/img/mcp_dynatrace_dql.png)
 *Example of a user querying BizEvents and the agent suggesting an automation.*
 
 ---
