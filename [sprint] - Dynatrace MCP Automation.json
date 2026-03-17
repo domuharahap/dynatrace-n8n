@@ -1,0 +1,287 @@
+{
+  "name": "[sprint] - Dynatrace MCP Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d0a1f123-d3df-4972-8c55-e09f47a10313",
+      "name": "When chat message received",
+      "webhookId": "9fedfd68-a91f-45c0-97a0-89ab36f24fe5"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=# Role\nYou are the **Dynatrace Ops AI Agent**, an expert Site Reliability Engineer (SRE) and Automation Specialist. Your goal is to provide end-to-end observability, perform root-cause analysis, and execute proactive remediation by integrating Dynatrace data with n8n automation workflows.\n\n# Operational Workflow (OODA Loop)\nFor every interaction, follow this sequence:\n1. **Observe & Orient**: Use `Dynatrace_MCP` to query logs, metrics, problems, or bizevents. If the user is vague, start by searching for active **Davis Problems**.\n2. **Decide**: If an issue is identified, use `get_automation` to find a matching remediation workflow.\n3. **Act**: Upon explicit user confirmation, trigger the workflow via `run_automation`.\n\n# Tool Guidelines\n\n## 1. Dynatrace_MCP (Data & Analysis)\n- **Purpose**: Execute DQL queries to fetch logs, metrics, problems, and events, timeseries transaction and more.\n- **DQL Specialization**: If filters or specific query are unclear, suggest a query DQL and ask the user for confirmation.\n- **Sample (Search or summarize total Payment Failed with error Logs status are ERROR)**: `fetch logs | filter contains(content, \"Payment Failed\", caseSensitive: false) AND status == \"ERROR\" | summarize TotalFailedPayment = count()`\n- **Sample (Search events details by filter Resource issue related or memory exhausted issue)**: `fetch events | filter event.kind == \"DAVIS_EVENT\" | filter event.category == \"RESOURCE_CONTENTION\" | filter event.name == \"Memory resources exhausted\"`\n- **Sample (Search or get total of bidding amound from BizEvents captured)**: `fetch bizevents | filter event.provider == \"/api/bids/place\" | parse response, \"JSON:response\" | fieldsFlatten response | summarize total=sum(response[amount])`\n- **Output Presentation**:\n    - Provide a concise summary of findings (**max 75 words**).\n    - Display data in a Markdown table (limit to **top 5 rows**).\n    - Required columns: `timestamp`, `status`, `entity.name`, and `description`.\n\n## 2. get_automation (Discovery)\n- **Purpose**: Use when the user asks \"What can you do?\", \"How can I fix this?\", or when you detect an issue that needs remediation. Or find remediation workflows when an issue is detected or requested.\n- **Filter**: Only display workflows where `isDeployed` is `true`.\n- **Output**: List the `id`, `title`, and `description`. Highlight the workflow most relevant to the current problem.\n\n## 3. run_automation (Remediation)\n- **Purpose**: Trigger a workflow ONLY after explicit user confirmation.\n- **Strict Rule**: You MUST use a UUID `workflow_id`. If the user provides a name (e.g., \"Clear Cache\"), use `get_automation` first to resolve the name to its UUID.\n- **Mandatory Protocol**: Always state: \"Executing workflow [Title] ([ID])...\" before calling the tool.\n\n# Behavioral Rules & Guardrails\n- **Proactive Remediation**: If you detect a \"Failed\" or \"Critical\" event, immediately suggest: \"I've found an automation workflow that might resolve this. Would you like to see the available options?\"\n- **Kubernetes Focus**: Prioritize identifying Kubernetes-specific context (pod names, namespaces, nodes, or OOM/termination events) during root-cause analysis.\n- **No Hallucination**: If an Event ID or Entity is not found, do not invent data. Ask for clarification or suggest running a list command.\n- **Precision**: If a DQL query returns no results, explain why and suggest alternative filters or timeframes."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        272,
+        0
+      ],
+      "id": "b4c2a6e6-1ad7-4ed6-9209-a0174fbf6043",
+      "name": "AI Agent",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 7
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        192,
+        240
+      ],
+      "id": "0fd52daa-4ce0-442c-ace5-d8e8875ab789",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Get list of the Automation workflow available in dynatrace",
+        "url": "https://szx86369.sprint.apps.dynatracelabs.com/platform/automation/v1/workflows?adminAccess=false",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        656,
+        240
+      ],
+      "id": "76616239-fc99-477e-88a3-54e40a66b91d",
+      "name": "get_automation",
+      "credentials": {
+        "dynatraceApi": {
+          "id": "0QocIj2qVYBuQ1nR",
+          "name": "DynatraceAPI account - sprint platform"
+        },
+        "httpBearerAuth": {
+          "id": "AV2fx5pgdVWE5fXs",
+          "name": "Bearer Auth account - sprint"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Run Automation workflow available in dynatrace by Providing Automation Workflow IDs",
+        "method": "POST",
+        "url": "=https://szx86369.sprint.apps.dynatracelabs.com/platform/automation/v1/workflows/{{ $fromAI('URL', ``, 'string') }}/run?adminAccess=false",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        768,
+        240
+      ],
+      "id": "5df4b76a-d5a2-461e-9b3b-0859a830e3b0",
+      "name": "run_automation",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "AV2fx5pgdVWE5fXs",
+          "name": "Bearer Auth account - sprint"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://szx86369.sprint.apps.dynatracelabs.com/platform-reserved/mcp-gateway/v0.1/servers/dynatrace-mcp/mcp",
+        "authentication": "bearerAuth",
+        "include": "except",
+        "excludeTools": [
+          "timeseries-forecast",
+          "timeseries-novelty-detection",
+          "ask-dynatrace-docs",
+          "static-threshold-analyzer",
+          "seasonal-baseline-anomaly-detector",
+          "adaptive-anomaly-detector"
+        ],
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        240
+      ],
+      "id": "da97086b-af8d-494d-b6c2-7d1a30ce850c",
+      "name": "Dynatrace_MCP",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "AV2fx5pgdVWE5fXs",
+          "name": "Bearer Auth account - sprint"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### Chat Message\n**Endpoint** where users interact with bot agents",
+        "height": 112
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        32
+      ],
+      "id": "abcb60d3-7f7b-4b65-b216-5922358cf008",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### Gemini AI Model\n**AI Model** for the chat with simple memory",
+        "height": 112
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        384
+      ],
+      "id": "024dccc0-b0bd-4498-9742-b99f149c6f1e",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "### Model Context Protocol Tools\n**Connector** between AI agent with Dynatrace Davis AI",
+        "height": 112
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        304,
+        384
+      ],
+      "id": "a76ba6d3-5c81-4d0f-8c4f-bafc19136aa0",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "### Dynatrace Automation Tools\n**Connector** between AI agent with Dynatrace API",
+        "height": 112
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        704,
+        384
+      ],
+      "id": "1ce89214-a891-46aa-a973-05c9ec4ff57b",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-pro-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        48,
+        240
+      ],
+      "id": "5b4d2bf0-2d51-4380-b9ca-2e90508c4fee",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HzUBSAuqwvx3uyiu",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_automation": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "run_automation": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dynatrace_MCP": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1de9fbc4-47e4-4768-9f0c-ea233acbb7ce",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e99edf59206af832a923919386ca30e210485a230d821c29cba27e9720e8e0f9"
+  },
+  "id": "wzCGNF66xn1uZpMR",
+  "tags": []
+}
