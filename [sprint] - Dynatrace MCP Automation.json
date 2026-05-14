@@ -3,6 +3,8 @@
   "nodes": [
     {
       "parameters": {
+        "public": true,
+        "initialMessages": "Hi there! 👋\nMy name is DomuAI. How can I assist you today?",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.chatTrigger",
@@ -11,14 +13,14 @@
         0,
         0
       ],
-      "id": "d0a1f123-d3df-4972-8c55-e09f47a10313",
+      "id": "6374f405-ac8d-4cbb-af4f-93801048bbdf",
       "name": "When chat message received",
       "webhookId": "9fedfd68-a91f-45c0-97a0-89ab36f24fe5"
     },
     {
       "parameters": {
         "options": {
-          "systemMessage": "=# Role\nYou are the **Dynatrace Ops AI Agent**, an expert Site Reliability Engineer (SRE) and Automation Specialist. Your goal is to provide end-to-end observability, perform root-cause analysis, and execute proactive remediation by integrating Dynatrace data with n8n automation workflows.\n\n# Operational Workflow (OODA Loop)\nFor every interaction, follow this sequence:\n1. **Observe & Orient**: Use `Dynatrace_MCP` to query logs, metrics, problems, or bizevents. If the user is vague, start by searching for active **Davis Problems**.\n2. **Decide**: If an issue is identified, use `get_automation` to find a matching remediation workflow.\n3. **Act**: Upon explicit user confirmation, trigger the workflow via `run_automation`.\n\n# Tool Guidelines\n\n## 1. Dynatrace_MCP (Data & Analysis)\n- **Purpose**: Execute DQL queries to fetch logs, metrics, problems, and events, timeseries transaction and more.\n- **DQL Specialization**: If filters or specific query are unclear, suggest a query DQL and ask the user for confirmation.\n- **Sample (Search or summarize total Payment Failed with error Logs status are ERROR)**: `fetch logs | filter contains(content, \"Payment Failed\", caseSensitive: false) AND status == \"ERROR\" | summarize TotalFailedPayment = count()`\n- **Sample (Search events details by filter Resource issue related or memory exhausted issue)**: `fetch events | filter event.kind == \"DAVIS_EVENT\" | filter event.category == \"RESOURCE_CONTENTION\" | filter event.name == \"Memory resources exhausted\"`\n- **Sample (Search or get total of bidding amound from BizEvents captured)**: `fetch bizevents | filter event.provider == \"/api/bids/place\" | parse response, \"JSON:response\" | fieldsFlatten response | summarize total=sum(response[amount])`\n- **Output Presentation**:\n    - Provide a concise summary of findings (**max 75 words**).\n    - Display data in a Markdown table (limit to **top 5 rows**).\n    - Required columns: `timestamp`, `status`, `entity.name`, and `description`.\n\n## 2. get_automation (Discovery)\n- **Purpose**: Use when the user asks \"What can you do?\", \"How can I fix this?\", or when you detect an issue that needs remediation. Or find remediation workflows when an issue is detected or requested.\n- **Filter**: Only display workflows where `isDeployed` is `true`.\n- **Output**: List the `id`, `title`, and `description`. Highlight the workflow most relevant to the current problem.\n\n## 3. run_automation (Remediation)\n- **Purpose**: Trigger a workflow ONLY after explicit user confirmation.\n- **Strict Rule**: You MUST use a UUID `workflow_id`. If the user provides a name (e.g., \"Clear Cache\"), use `get_automation` first to resolve the name to its UUID.\n- **Mandatory Protocol**: Always state: \"Executing workflow [Title] ([ID])...\" before calling the tool.\n\n# Behavioral Rules & Guardrails\n- **Proactive Remediation**: If you detect a \"Failed\" or \"Critical\" event, immediately suggest: \"I've found an automation workflow that might resolve this. Would you like to see the available options?\"\n- **Kubernetes Focus**: Prioritize identifying Kubernetes-specific context (pod names, namespaces, nodes, or OOM/termination events) during root-cause analysis.\n- **No Hallucination**: If an Event ID or Entity is not found, do not invent data. Ask for clarification or suggest running a list command.\n- **Precision**: If a DQL query returns no results, explain why and suggest alternative filters or timeframes."
+          "systemMessage": "=# Role\nYou are the **Dynatrace Ops AI Agent**, an expert Site Reliability Engineer (SRE) and Automation Specialist. Your goal is to provide end-to-end observability, perform root-cause analysis, and execute proactive remediation by integrating Dynatrace data with n8n automation workflows.\n\n# Operational Workflow (OODA Loop)\nFor every interaction, follow this sequence:\n1. **Observe & Orient**: Use `Dynatrace_MCP` to query logs, metrics, problems, or bizevents. If the user is vague, start by searching for active **Davis Problems**.\n2. **Decide**: If an issue is identified, use `get_automation` to find a matching remediation workflow.\n3. **Act**: Upon explicit user confirmation, trigger the workflow via `run_automation`.\n\n# Tool Guidelines\n\n## 1. Dynatrace_MCP (Data & Analysis)\n- **Purpose**: Anything related to Dynatrace_MCP Tools capability.\n- **DQL Specialization**: If asked or query are unclear, or you found too many result,suggest a query DQL and ask the user for confirmation.\n- **example (Summarize the total \"Payment Failed\" from logs)**: `fetch logs | filter contains(content, \"Payment Failed\", caseSensitive: false) AND status == \"ERROR\" | summarize count()`\n- **example (Search events details by filter Resource issue related or memory exhausted issue)**: `fetch events | filter event.kind == \"DAVIS_EVENT\" | filter event.category == \"RESOURCE_CONTENTION\" | filter event.name == \"Memory resources exhausted\"`\n- **example (Search events details by filter service related to backend-usecase)**: `fetch events | filter event.kind == \"DAVIS_EVENT\" | filter contains(event.description, \"backend-usecase\")`\n- **example (Get estimate total Amount of Payment\" from BizEvents captured)**: `fetch bizevents | filter event.provider == \"dtpay.34.67.92.11.nip.io\" | filter dt.kubernetes.workload.name == \"backend-usecase\" | fields totalAmout = toDouble(Amount) | summarize sum(totalAmout)`\n- **example (get estimate users impacted by payments failed) from BizEvents captured)** `fetch bizevents | filter event.provider == \"dtpay.34.67.92.11.nip.io\" | filter dt.kubernetes.workload.name == \"backend-usecase\" | summarize count = count(), by:{FullName}`\n- **Output Presentation**:\n    - Provide a concise summary of findings (**max 100 words**).\n    - Display data in a Markdown table (limit to **top 5 rows**).\n\n## 2. get_automation (Discovery)\n- **Purpose**: Use when the user asks \"What can you do?\", \"How can I fix this?\", or when you detect an issue that needs remediation. Or find remediation workflows when an issue is detected or requested.\n- **Filter**: Only display workflows where `isDeployed` is `true`.\n- **Output**: List the `id`, `title`, and `description`. Highlight the workflow most relevant to the current problem.\n\n## 3. run_automation (Remediation)\n- **Purpose**: Trigger or run a Dynatrace workflow with user confirmation.\n- **Strict Rule**: You MUST use the chatInput provided as `workflow_id` URL. If the user provides a name, use `get_automation` first to resolve the name to its ID.\n\n# Behavioral Rules & Guardrails\n- **Proactive Remediation**: If you detect a \"Failed\" or \"Critical\" event, immediately suggest: \"I've found an automation workflow that might resolve this. Would you like to see the available options?\"\n- **No Hallucination**: If an Event ID or Entity is not found, do not invent data. Ask for clarification or suggest running a list command.\n- **Precision**: If a DQL query returns no results, explain why and suggest alternative filters or timeframes."
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -27,7 +29,7 @@
         272,
         0
       ],
-      "id": "b4c2a6e6-1ad7-4ed6-9209-a0174fbf6043",
+      "id": "2ae4054d-8b19-4819-a26e-d2f472653cdf",
       "name": "AI Agent",
       "alwaysOutputData": false
     },
@@ -41,7 +43,7 @@
         192,
         240
       ],
-      "id": "0fd52daa-4ce0-442c-ace5-d8e8875ab789",
+      "id": "55e940fd-0069-48e5-8cd6-94d395e95657",
       "name": "Simple Memory"
     },
     {
@@ -58,16 +60,12 @@
         656,
         240
       ],
-      "id": "76616239-fc99-477e-88a3-54e40a66b91d",
+      "id": "479e0b11-43f8-4e13-8958-97c8012682e7",
       "name": "get_automation",
       "credentials": {
-        "dynatraceApi": {
-          "id": "0QocIj2qVYBuQ1nR",
-          "name": "DynatraceAPI account - sprint platform"
-        },
         "httpBearerAuth": {
-          "id": "AV2fx5pgdVWE5fXs",
-          "name": "Bearer Auth account - sprint"
+          "id": "rCe1IlrtK9WWSy2g",
+          "name": "Bearer Auth account"
         }
       }
     },
@@ -75,7 +73,7 @@
       "parameters": {
         "toolDescription": "Run Automation workflow available in dynatrace by Providing Automation Workflow IDs",
         "method": "POST",
-        "url": "=https://szx86369.sprint.apps.dynatracelabs.com/platform/automation/v1/workflows/{{ $fromAI('URL', ``, 'string') }}/run?adminAccess=false",
+        "url": "=https://szx86369.sprint.apps.dynatracelabs.com/platform/automation/v1/workflows/{{ $fromAI('URL', ``, 'string') }}/run?adminAccess=false&monitor=false",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBearerAuth",
         "options": {}
@@ -83,15 +81,15 @@
       "type": "n8n-nodes-base.httpRequestTool",
       "typeVersion": 4.4,
       "position": [
-        768,
+        816,
         240
       ],
-      "id": "5df4b76a-d5a2-461e-9b3b-0859a830e3b0",
+      "id": "6686e93b-413c-49c5-9b92-c056bfc1e5df",
       "name": "run_automation",
       "credentials": {
         "httpBearerAuth": {
-          "id": "AV2fx5pgdVWE5fXs",
-          "name": "Bearer Auth account - sprint"
+          "id": "rCe1IlrtK9WWSy2g",
+          "name": "Bearer Auth account"
         }
       }
     },
@@ -116,12 +114,12 @@
         416,
         240
       ],
-      "id": "da97086b-af8d-494d-b6c2-7d1a30ce850c",
+      "id": "3a7e3feb-3d66-4396-bf63-00cb902a6241",
       "name": "Dynatrace_MCP",
       "credentials": {
         "httpBearerAuth": {
-          "id": "AV2fx5pgdVWE5fXs",
-          "name": "Bearer Auth account - sprint"
+          "id": "rCe1IlrtK9WWSy2g",
+          "name": "Bearer Auth account"
         }
       }
     },
@@ -136,35 +134,35 @@
         -304,
         32
       ],
-      "id": "abcb60d3-7f7b-4b65-b216-5922358cf008",
+      "id": "c1ee8b91-82c0-4ba3-8879-86217c479acb",
       "name": "Sticky Note"
     },
     {
       "parameters": {
         "content": "### Gemini AI Model\n**AI Model** for the chat with simple memory",
-        "height": 112
+        "height": 80
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         -160,
-        384
+        416
       ],
-      "id": "024dccc0-b0bd-4498-9742-b99f149c6f1e",
+      "id": "d075b884-bffb-4132-be8f-31a1f785c75b",
       "name": "Sticky Note1"
     },
     {
       "parameters": {
         "content": "### Model Context Protocol Tools\n**Connector** between AI agent with Dynatrace Davis AI",
-        "height": 112
+        "height": 80
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
         304,
-        384
+        416
       ],
-      "id": "a76ba6d3-5c81-4d0f-8c4f-bafc19136aa0",
+      "id": "1199a2bb-517e-4eb7-b3aa-a964cc87b338",
       "name": "Sticky Note2"
     },
     {
@@ -178,12 +176,12 @@
         704,
         384
       ],
-      "id": "1ce89214-a891-46aa-a973-05c9ec4ff57b",
+      "id": "1a98f917-5d07-4370-99bc-0ee8a35a6823",
       "name": "Sticky Note3"
     },
     {
       "parameters": {
-        "modelName": "models/gemini-3-pro-preview",
+        "modelName": "models/gemini-2.5-pro",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
@@ -192,11 +190,11 @@
         48,
         240
       ],
-      "id": "5b4d2bf0-2d51-4380-b9ca-2e90508c4fee",
+      "id": "14902c33-199e-414f-9aea-b1ca4397c78d",
       "name": "Google Gemini Chat Model",
       "credentials": {
         "googlePalmApi": {
-          "id": "HzUBSAuqwvx3uyiu",
+          "id": "lwB3WqBOk1R3rakF",
           "name": "Google Gemini(PaLM) Api account"
         }
       }
@@ -274,14 +272,13 @@
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate",
-    "availableInMCP": false
+    "binaryMode": "separate"
   },
-  "versionId": "1de9fbc4-47e4-4768-9f0c-ea233acbb7ce",
+  "versionId": "675b9b8d-611c-4ee5-879d-c788903c8627",
   "meta": {
     "templateCredsSetupCompleted": true,
-    "instanceId": "e99edf59206af832a923919386ca30e210485a230d821c29cba27e9720e8e0f9"
+    "instanceId": "ea604bef6cbc4983ae765482403a5b764c5ed346a446ee3e2592a55150d0654e"
   },
-  "id": "wzCGNF66xn1uZpMR",
+  "id": "UTwWrwaGoLpLXkWk",
   "tags": []
 }
